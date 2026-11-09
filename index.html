@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aundi</title>
+<meta name="description" content="One place in Sardinia every day. Six guesses.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=Alegreya:ital,wght@0,800;1,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --zee: #0d5468;
+  --zee-diep: #0a4254;
+  --zee-licht: #2b7388;
+  --zand: #efd9a3;
+  --inkt: #12303a;
+  --koraal: #d2431f;
+  --wit: #fbf7ec;
+  --display: "Alegreya", Georgia, serif;
+  --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--zee); color: var(--wit); font: 400 20px/1.45 var(--body); }
+p, h1, h2, ul, ol { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+a { color: var(--zand); }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--zand); outline-offset: 2px; }
+
+.band { height: 26px; background: var(--inkt) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='26'%3E%3Crect width='52' height='26' fill='%2312303a'/%3E%3Cpath d='M13 2l11 11-11 11L2 13z' fill='%23d2431f'/%3E%3Cpath d='M13 8l5 5-5 5-5-5z' fill='%23efd9a3'/%3E%3Cpath d='M39 5l8 8-8 8-8-8z' fill='%23efd9a3'/%3E%3Cpath d='M39 10l3 3-3 3-3-3z' fill='%2312303a'/%3E%3C/svg%3E") repeat-x center; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 18px 24px 40px; }
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; margin-bottom: 18px; }
+.brand { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 16px; }
+h1 { font: 800 clamp(58px, 9vw, 92px)/.95 var(--display); color: var(--zand); letter-spacing: -.01em; }
+.tag { font: italic 500 clamp(22px, 3vw, 28px)/1.2 var(--display); }
+.langs { display: flex; gap: 2px; }
+.langs button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 6px 9px; font-weight: 700; font-size: 18px; color: var(--wit); }
+.langs button[aria-pressed="true"] { border-bottom-color: var(--zand); color: var(--zand); }
+
+.game { display: grid; grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: 16px 48px; align-items: start; }
+.mapbox svg { display: block; width: 100%; height: auto; }
+.how { max-width: 34em; margin-bottom: 16px; }
+.nr { font-size: 17px; color: var(--zand); font-variant-numeric: tabular-nums; }
+
+.hints { border-top: 2px solid var(--zee-licht); margin-bottom: 18px; }
+.hints li { display: flex; gap: 12px; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--zee-licht); }
+.hints .k { color: var(--zand); flex: none; }
+.hints .v { text-align: right; font-weight: 500; }
+.hints li.story { display: block; }
+.hints li.story .v { display: block; text-align: left; font: italic 500 22px/1.32 var(--display); margin-top: 2px; }
+.hints li.locked { opacity: .62; }
+.hints li.locked .v { font-weight: 400; font-size: 17px; }
+
+.tries { display: grid; gap: 5px; margin-bottom: 16px; }
+.tries li { display: grid; grid-template-columns: 30px 1fr auto 36px; align-items: center; gap: 10px; min-height: 44px; padding: 3px 10px 3px 6px; background: var(--zee-diep); position: relative; overflow: hidden; }
+.tries li.empty { background: none; border: 1px dashed var(--zee-licht); }
+.tries .num { font-weight: 700; color: var(--zand); text-align: center; font-variant-numeric: tabular-nums; }
+.tries .name { font-weight: 500; overflow-wrap: anywhere; }
+.tries .km { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tries .dir { display: flex; align-items: center; justify-content: center; }
+.tries .bar { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--zand); }
+.tries li.hit { background: var(--zand); color: var(--inkt); }
+.tries li.hit .num { color: var(--inkt); }
+
+.ask { position: relative; }
+.ask label { display: block; margin-bottom: 4px; }
+.row { display: flex; gap: 8px; }
+#guess { flex: 1; min-width: 0; height: 54px; padding: 0 14px; background: var(--wit); color: var(--inkt); border: 0; border-radius: 2px; font-size: 21px; }
+#go { height: 54px; padding: 0 24px; background: var(--koraal); color: #fff; border: 0; border-radius: 2px; font-weight: 700; }
+#go:hover, .btn:hover { background: #b83817; }
+#list { position: absolute; z-index: 5; left: 0; right: 0; top: 100%; background: var(--wit); color: var(--inkt); max-height: 290px; overflow-y: auto; box-shadow: 0 8px 18px rgba(4, 24, 32, .45); }
+#list[hidden] { display: none; }
+#list li { padding: 10px 14px; border-bottom: 1px solid #e4dcc5; cursor: pointer; }
+#list li[aria-selected="true"], #list li:hover { background: var(--zand); }
+.msg { min-height: 1.5em; color: var(--zand); margin-top: 6px; }
+
+.end { background: var(--zand); color: var(--inkt); padding: 18px 20px; }
+.end h2 { font: 800 34px/1.1 var(--display); }
+.end .place { font: 800 24px/1.2 var(--display); margin-top: 4px; color: var(--koraal); }
+.end .story { font: italic 500 22px/1.32 var(--display); margin: 8px 0 14px; }
+.end a { color: var(--inkt); font-weight: 700; }
+.acts { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; margin-bottom: 14px; }
+.btn { background: var(--koraal); color: #fff; border: 0; border-radius: 2px; padding: 12px 22px; font-weight: 700; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; border-top: 1px solid rgba(18, 48, 58, .35); padding-top: 12px; text-align: center; }
+.stats b { display: block; font: 800 30px/1 var(--display); font-variant-numeric: tabular-nums; }
+.stats span { font-size: 16px; line-height: 1.15; display: block; margin-top: 3px; }
+.tomorrow { font-size: 17px; margin-top: 12px; }
+#shareText { width: 100%; margin-top: 8px; height: 110px; font-size: 16px; color: var(--inkt); background: var(--wit); border: 0; padding: 8px; }
+
+footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid var(--zee-licht); font-size: 17px; }
+@keyframes tik { 0% { transform: scale(.4); } 100% { transform: scale(1); } }
+.pin { transform-box: fill-box; transform-origin: center; animation: tik .25s ease-out; }
+@media (prefers-reduced-motion: reduce) { .pin { animation: none; } }
+
+@media (max-width: 780px) {
+  .wrap { padding: 12px 16px 32px; }
+  .game { grid-template-columns: minmax(0, 1fr); }
+  .mapbox { order: 2; max-width: 340px; margin: 0 auto; width: 100%; }
+  .tries li.empty { display: none; }
+  .play { order: 1; }
+  .langs button { padding: 6px 7px; font-size: 17px; }
+}
+</style>
+</head>
+<body>
+<div class="band"></div>
+<div class="wrap">
+  <header class="head">
+    <div class="brand">
+      <h1>Aundi?</h1>
+      <p class="tag" id="tag"></p>
+    </div>
+    <div class="langs" id="langs" role="group" aria-label="Language"></div>
+  </header>
+  <main class="game">
+    <div class="mapbox" id="map"></div>
+    <div class="play" id="play"></div>
+  </main>
+  <footer id="foot"></footer>
+</div>
+<div class="band"></div>
+
+<script>
+"use strict";
+/* Pas deze twee regels aan zodra het spel op een eigen adres staat. */
+const SHARE_URL = "aundi.sardegnaautentica.com";
+const SITE_URL = "https://sardegnaautentica.com";
+
+const LANGS = ["en", "it", "nl", "de", "fr", "es"];
+const T = {
+  en: { tag: "Where in Sardinia?", how: "One place on the island, every day. You have six guesses. Each one tells you how far off you are and which way to go.", no: "Puzzle", type: "Today's place", coast: "Location", nearSea: "By the sea", inland: "Inland", area: "Area", story: "A clue", letter: "First letter", locked: "after guess", label: "Your guess", ph: "Start typing a place…", go: "Guess", pick: "Please choose a place from the list.", dup: "You've already tried that one.", won: "Found it!", in: "guess", ins: "guesses", lost: "Not today.", was: "It was", share: "Share my result", copied: "Copied. Paste it wherever you like.", copyFail: "Copy the text below:", more: "See it for real: our Sardinia guides", played: "Played", pct: "Won", streak: "In a row", best: "Best run", tomorrow: "A new place tomorrow, at midnight Sardinian time.", name: "“Aundi” is Sardinian for “where”.", by: "From Assemini, by", t: { beach: "A beach", town: "A town", village: "A village", site: "A historic site", island: "An island", nature: "A natural wonder" }, d: ["N","NE","E","SE","S","SW","W","NW"] },
+  it: { tag: "Dove, in Sardegna?", how: "Un luogo dell'isola, ogni giorno. Hai sei tentativi. Ogni volta scopri quanto sei lontano e da che parte andare.", no: "Puzzle", type: "Il luogo di oggi", coast: "Posizione", nearSea: "Vicino al mare", inland: "Nell'interno", area: "Zona", story: "Un indizio", letter: "Prima lettera", locked: "dopo il tentativo", label: "Il tuo tentativo", ph: "Scrivi il nome di un luogo…", go: "Prova", pick: "Scegli un luogo dalla lista.", dup: "Questo l'hai già provato.", won: "Trovato!", in: "tentativo", ins: "tentativi", lost: "Oggi no.", was: "Era", share: "Condividi il risultato", copied: "Copiato. Incollalo dove vuoi.", copyFail: "Copia il testo qui sotto:", more: "Vuoi vederlo dal vivo? Le nostre guide alla Sardegna", played: "Partite", pct: "Vinte", streak: "Di fila", best: "Record", tomorrow: "Domani un nuovo luogo, a mezzanotte ora sarda.", name: "“Aundi” in sardo vuol dire “dove”.", by: "Da Assemini, con", t: { beach: "Una spiaggia", town: "Una città", village: "Un paese", site: "Un sito storico", island: "Un'isola", nature: "Una meraviglia naturale" }, d: ["N","NE","E","SE","S","SO","O","NO"] },
+  nl: { tag: "Waar op Sardinië?", how: "Elke dag één plek op het eiland. Je mag zes keer raden. Elke keer zie je hoe ver je ernaast zit en welke kant je op moet.", no: "Puzzel", type: "De plek van vandaag", coast: "Ligging", nearSea: "Bij de zee", inland: "In het binnenland", area: "Streek", story: "Een aanwijzing", letter: "Eerste letter", locked: "na poging", label: "Jouw antwoord", ph: "Begin een plaats te typen…", go: "Raden", pick: "Kies een plaats uit de lijst.", dup: "Die heb je al geprobeerd.", won: "Gevonden!", in: "poging", ins: "pogingen", lost: "Vandaag niet.", was: "Het was", share: "Deel mijn score", copied: "Gekopieerd. Plak het waar je wilt.", copyFail: "Kopieer de tekst hieronder:", more: "Zelf gaan kijken? Onze gidsen voor Sardinië", played: "Gespeeld", pct: "Gewonnen", streak: "Op rij", best: "Record", tomorrow: "Morgen een nieuwe plek, om middernacht Sardijnse tijd.", name: "“Aundi” is Sardijns voor “waar”.", by: "Uit Assemini, door", t: { beach: "Een strand", town: "Een stad", village: "Een dorp", site: "Een historische plek", island: "Een eiland", nature: "Een natuurwonder" }, d: ["N","NO","O","ZO","Z","ZW","W","NW"] },
+  de: { tag: "Wo auf Sardinien?", how: "Jeden Tag ein Ort auf der Insel. Du hast sechs Versuche. Jeder zeigt dir, wie weit du entfernt bist und in welche Richtung es geht.", no: "Rätsel", type: "Der Ort von heute", coast: "Lage", nearSea: "Am Meer", inland: "Im Landesinneren", area: "Gegend", story: "Ein Hinweis", letter: "Erster Buchstabe", locked: "nach Versuch", label: "Dein Tipp", ph: "Ort eintippen…", go: "Raten", pick: "Bitte wähle einen Ort aus der Liste.", dup: "Den hattest du schon.", won: "Gefunden!", in: "Versuch", ins: "Versuchen", lost: "Heute nicht.", was: "Gesucht war", share: "Ergebnis teilen", copied: "Kopiert. Füge es ein, wo du magst.", copyFail: "Kopiere den Text unten:", more: "Lieber selbst hinfahren? Unsere Sardinien-Führer", played: "Gespielt", pct: "Gewonnen", streak: "In Folge", best: "Rekord", tomorrow: "Morgen ein neuer Ort, um Mitternacht sardischer Zeit.", name: "„Aundi“ heißt auf Sardisch „wo“.", by: "Aus Assemini, von", t: { beach: "Ein Strand", town: "Eine Stadt", village: "Ein Dorf", site: "Ein historischer Ort", island: "Eine Insel", nature: "Ein Naturwunder" }, d: ["N","NO","O","SO","S","SW","W","NW"] },
+  fr: { tag: "Où en Sardaigne ?", how: "Chaque jour, un lieu de l'île. Vous avez six essais. À chaque fois, vous voyez à quelle distance vous êtes et dans quelle direction aller.", no: "Énigme", type: "Le lieu du jour", coast: "Situation", nearSea: "Près de la mer", inland: "À l'intérieur des terres", area: "Région", story: "Un indice", letter: "Première lettre", locked: "après l'essai", label: "Votre réponse", ph: "Tapez le nom d'un lieu…", go: "Essayer", pick: "Choisissez un lieu dans la liste.", dup: "Vous l'avez déjà essayé.", won: "Trouvé !", in: "essai", ins: "essais", lost: "Pas aujourd'hui.", was: "C'était", share: "Partager mon résultat", copied: "Copié. Collez-le où vous voulez.", copyFail: "Copiez le texte ci-dessous :", more: "Envie de le voir en vrai ? Nos guides de la Sardaigne", played: "Parties", pct: "Gagnées", streak: "D'affilée", best: "Record", tomorrow: "Demain un nouveau lieu, à minuit heure sarde.", name: "« Aundi » veut dire « où » en sarde.", by: "Depuis Assemini, par", t: { beach: "Une plage", town: "Une ville", village: "Un village", site: "Un site historique", island: "Une île", nature: "Une merveille naturelle" }, d: ["N","NE","E","SE","S","SO","O","NO"] },
+  es: { tag: "¿Dónde en Cerdeña?", how: "Cada día, un lugar de la isla. Tienes seis intentos. Cada uno te dice a qué distancia estás y hacia dónde ir.", no: "Reto", type: "El lugar de hoy", coast: "Ubicación", nearSea: "Junto al mar", inland: "En el interior", area: "Zona", story: "Una pista", letter: "Primera letra", locked: "tras el intento", label: "Tu respuesta", ph: "Escribe un lugar…", go: "Probar", pick: "Elige un lugar de la lista.", dup: "Ese ya lo has probado.", won: "¡Lo tienes!", in: "intento", ins: "intentos", lost: "Hoy no.", was: "Era", share: "Compartir resultado", copied: "Copiado. Pégalo donde quieras.", copyFail: "Copia el texto de abajo:", more: "¿Quieres verlo en persona? Nuestras guías de Cerdeña", played: "Partidas", pct: "Ganadas", streak: "Seguidas", best: "Récord", tomorrow: "Mañana un lugar nuevo, a medianoche hora sarda.", name: "«Aundi» significa «dónde» en sardo.", by: "Desde Assemini, por", t: { beach: "Una playa", town: "Una ciudad", village: "Un pueblo", site: "Un lugar histórico", island: "Una isla", nature: "Una maravilla natural" }, d: ["N","NE","E","SE","S","SO","O","NO"] }
+};
+
+/* Naam, breedte, lengte */
+const PLACES = [
+  ["Su Nuraxi",39.705,8.990],["Alghero",40.558,8.319],["Bosa",40.298,8.498],["Cala Goloritzé",40.110,9.689],["Orgosolo",40.205,9.354],["Mamoiada",40.215,9.283],["Carloforte",39.145,8.306],["Castelsardo",40.914,8.713],["Porto Cervo",41.136,9.536],["Caprera",41.210,9.460],["La Pelosa",40.965,8.207],["Cagliari",39.223,9.120],["Nora",38.985,9.017],["Tharros",39.873,8.437],["Sant'Antioco",39.068,8.454],["Piscinas",39.540,8.450],["Is Arutas",39.957,8.394],["Tiscali",40.240,9.490],["Gola di Gorropu",40.180,9.500],["Cala Luna",40.225,9.625],["Grotte di Nettuno",40.565,8.165],["Porto Flavia",39.330,8.420],["Asinara",41.060,8.270],["Oristano",39.903,8.592],["Nuoro",40.321,9.330],["Calangianus",40.923,9.190],["Ulassai",39.810,9.500],["San Sperate",39.357,9.008],["Giara di Gesturi",39.740,8.990],["Capo d'Orso",41.175,9.415],["Sadali",39.815,9.270],
+  ["Olbia",40.923,9.498],["Tempio Pausania",40.900,9.104],["Arzachena",41.080,9.390],["Palau",41.180,9.380],["La Maddalena",41.215,9.408],["Santa Teresa Gallura",41.240,9.190],["Capo Testa",41.240,9.145],["San Teodoro",40.770,9.670],["Budoni",40.700,9.700],["Posada",40.630,9.720],["Siniscola",40.570,9.690],["Orosei",40.380,9.690],["Dorgali",40.290,9.590],["Cala Gonone",40.280,9.630],["Oliena",40.270,9.400],["Su Gologone",40.290,9.490],["Baunei",40.030,9.660],["Santa Maria Navarrese",39.990,9.690],["Arbatax",39.935,9.700],["Tortolì",39.930,9.660],["Lanusei",39.880,9.540],["Villasimius",39.141,9.520],["Costa Rei",39.250,9.570],["Muravera",39.420,9.570],["Quartu Sant'Elena",39.240,9.180],["Assemini",39.290,9.000],["Pula",39.010,9.000],["Chia",38.890,8.880],["Teulada",38.970,8.770],["Porto Pino",38.960,8.600],["Carbonia",39.170,8.520],["Iglesias",39.310,8.540],["Buggerru",39.400,8.400],["Arbus",39.530,8.600],["Sanluri",39.560,8.900],["Villacidro",39.460,8.740],["Cabras",39.930,8.530],["Santa Caterina di Pittinuri",40.100,8.490],["Cuglieri",40.190,8.570],["Santu Lussurgiu",40.140,8.650],["Macomer",40.260,8.780],["Ozieri",40.585,9.000],["Bonorva",40.420,8.770],["Ittiri",40.590,8.570],["Sassari",40.727,8.560],["Porto Torres",40.840,8.400],["Stintino",40.940,8.220],["Valledoria",40.930,8.830],["Isola Rossa",41.010,8.870],["Fonni",40.120,9.250],["Aritzo",39.950,9.190],["Tonara",40.020,9.170],["Desulo",40.010,9.230],["Laconi",39.850,9.050],["Isili",39.740,9.110],
+  ["Budelli",41.285,9.360],["Tavolara",40.900,9.710],["Cala Brandinchi",40.830,9.690],["Galtellì",40.385,9.615],["Grotta del Bue Marino",40.245,9.615],["Grotta di Ispinigoli",40.330,9.570],["Gairo Vecchio",39.850,9.500],["Castiadas",39.240,9.510],["Tuerredda",38.895,8.810],["Laveria Lamarmora",39.310,8.440],["Pan di Zucchero",39.335,8.410],["Ales",39.770,8.820],["Montevecchio",39.550,8.580],["Tempio di Antas",39.380,8.500],["Grotte Is Zuddas",39.030,8.760],["Sant'Andrea Priu",40.420,8.847],["Anghelu Ruju",40.635,8.330],["Monte d'Accoddi",40.790,8.450],["Santu Antine",40.490,8.770],["Saccargia",40.695,8.665],["San Salvatore di Sinis",39.930,8.500],["S'Archittu",40.090,8.490],["Pattada",40.580,9.110],["Sedilo",40.170,8.920],["Gavoi",40.160,9.190],["Santa Cristina",40.060,8.770],["Aggius",40.930,9.070],["Berchidda",40.785,9.165],["Coddu Vecchiu",41.055,9.400],["Bitti",40.480,9.380],["Punta La Marmora",39.990,9.330],["Sella del Diavolo",39.180,9.165],["Lollove",40.355,9.390]
+];
+const WHERE = Object.fromEntries(PLACES.map((p) => [p[0], { lat: p[1], lon: p[2] }]));
+
+/* Plaats, soort, aan zee (1) of niet (0), streek, aanwijzing zonder de naam */
+const PUZZLES = [
+  ["Su Nuraxi","site",0,"Marmilla",{en:"A stone tower more than 3,000 years old, with a whole village at its feet. On the UNESCO list since 1997.",it:"Una torre di pietra di oltre 3.000 anni, con un intero villaggio ai suoi piedi. Patrimonio UNESCO dal 1997.",nl:"Een stenen toren van meer dan 3000 jaar oud, met een heel dorp aan zijn voeten. Sinds 1997 UNESCO-werelderfgoed.",de:"Ein über 3000 Jahre alter Steinturm, ein ganzes Dorf zu seinen Füßen. Seit 1997 UNESCO-Welterbe.",fr:"Une tour de pierre vieille de plus de 3 000 ans, avec tout un village à ses pieds. Classée à l'UNESCO depuis 1997.",es:"Una torre de piedra de más de 3.000 años, con todo un poblado a sus pies. Patrimonio de la UNESCO desde 1997."}],
+  ["Alghero","town",1,"Nurra",{en:"Walk through the old town and you may still hear Catalan, which arrived here in the 14th century.",it:"Nel centro storico puoi ancora sentir parlare catalano, arrivato qui nel Trecento.",nl:"In de oude stad kun je nog altijd Catalaans horen, dat hier in de 14e eeuw terechtkwam.",de:"In der Altstadt hört man noch Katalanisch, das im 14. Jahrhundert hierherkam.",fr:"Dans la vieille ville, on entend encore parler catalan, arrivé ici au XIVe siècle.",es:"En el casco antiguo aún se oye hablar catalán, que llegó aquí en el siglo XIV."}],
+  ["Bosa","town",1,"Planargia",{en:"Pastel houses along a river you can sail up, and a medieval castle on the hill above.",it:"Case color pastello lungo un fiume navigabile e un castello medievale sulla collina.",nl:"Pastelkleurige huizen langs een bevaarbare rivier, met een middeleeuws kasteel op de heuvel erboven.",de:"Pastellfarbene Häuser an einem schiffbaren Fluss, darüber eine mittelalterliche Burg.",fr:"Des maisons pastel le long d'une rivière navigable, et un château médiéval sur la colline.",es:"Casas de colores pastel junto a un río navegable y un castillo medieval en lo alto."}],
+  ["Cala Goloritzé","beach",1,"Ogliastra",{en:"A limestone spire above a white cove. No road goes there: you walk down, and boats must stay offshore.",it:"Una guglia calcarea sopra una caletta bianca. Nessuna strada ci arriva: si scende a piedi e le barche restano al largo.",nl:"Een kalkstenen naald boven een witte baai. Er loopt geen weg heen: je gaat te voet en boten moeten op afstand blijven.",de:"Eine Kalksteinnadel über einer weißen Bucht. Keine Straße führt hin: Man steigt zu Fuß ab, Boote bleiben draußen.",fr:"Une aiguille calcaire au-dessus d'une crique blanche. Aucune route : on descend à pied et les bateaux restent au large.",es:"Una aguja caliza sobre una cala blanca. No hay carretera: se baja a pie y los barcos se quedan lejos."}],
+  ["Orgosolo","village",0,"Barbagia",{en:"The walls do the talking here: hundreds of painted murals about politics, work and village life.",it:"Qui parlano i muri: centinaia di murales su politica, lavoro e vita di paese.",nl:"Hier praten de muren: honderden schilderingen over politiek, werk en het dorpsleven.",de:"Hier sprechen die Wände: Hunderte Wandbilder über Politik, Arbeit und Dorfleben.",fr:"Ici, ce sont les murs qui parlent : des centaines de fresques sur la politique, le travail et la vie du village.",es:"Aquí hablan las paredes: cientos de murales sobre política, trabajo y vida de pueblo."}],
+  ["Mamoiada","village",0,"Barbagia",{en:"At Carnival, men in black wooden masks and heavy sheep bells walk in slow, rhythmic steps.",it:"A Carnevale, uomini con maschere nere di legno e pesanti campanacci avanzano con passo lento e ritmato.",nl:"Met carnaval lopen mannen met zwarte houten maskers en zware schapenbellen in een trage, ritmische pas.",de:"Im Karneval schreiten Männer mit schwarzen Holzmasken und schweren Schafglocken langsam im Takt.",fr:"Au carnaval, des hommes aux masques de bois noir et aux lourdes sonnailles avancent d'un pas lent et rythmé.",es:"En Carnaval, hombres con máscaras negras de madera y pesados cencerros avanzan con paso lento y rítmico."}],
+  ["Carloforte","town",1,"Sulcis",{en:"Its founders came over from Tabarka in Tunisia in the 18th century, and people here still speak a Ligurian dialect.",it:"I fondatori arrivarono da Tabarka, in Tunisia, nel Settecento, e qui si parla ancora un dialetto ligure.",nl:"De stichters kwamen in de 18e eeuw uit Tabarka in Tunesië, en men spreekt hier nog altijd een Ligurisch dialect.",de:"Die Gründer kamen im 18. Jahrhundert aus Tabarka in Tunesien, bis heute spricht man hier einen ligurischen Dialekt.",fr:"Ses fondateurs sont venus de Tabarka, en Tunisie, au XVIIIe siècle, et on y parle encore un dialecte ligure.",es:"Sus fundadores llegaron de Tabarka, en Túnez, en el siglo XVIII, y aquí aún se habla un dialecto ligur."}],
+  ["Castelsardo","town",1,"Anglona",{en:"A medieval castle on a rock above the sea, and a long tradition of baskets woven by hand.",it:"Un castello medievale su una rupe a picco sul mare e una lunga tradizione di cestini intrecciati a mano.",nl:"Een middeleeuws kasteel op een rots boven zee en een lange traditie van handgevlochten manden.",de:"Eine mittelalterliche Burg auf einem Felsen über dem Meer und eine lange Tradition handgeflochtener Körbe.",fr:"Un château médiéval sur un rocher face à la mer, et une longue tradition de paniers tressés à la main.",es:"Un castillo medieval sobre una roca junto al mar y una larga tradición de cestas tejidas a mano."}],
+  ["Porto Cervo","village",1,"Gallura",{en:"In the 1960s, the Aga Khan and his partners turned this empty coast into a playground for the very rich.",it:"Negli anni Sessanta l'Aga Khan e i suoi soci trasformarono questa costa deserta nel rifugio dei super ricchi.",nl:"In de jaren zestig maakten de Aga Khan en zijn partners van deze lege kust een speeltuin voor de allerrijksten.",de:"In den 1960er-Jahren machten der Aga Khan und seine Partner aus dieser leeren Küste ein Refugium der Superreichen.",fr:"Dans les années 1960, l'Aga Khan et ses associés ont fait de cette côte déserte le terrain de jeu des grandes fortunes.",es:"En los años sesenta, el Aga Khan y sus socios convirtieron esta costa vacía en el refugio de los más ricos."}],
+  ["Caprera","island",1,"Gallura",{en:"After fighting to unite Italy, Garibaldi retired to this little island to farm. He died here in 1882.",it:"Dopo aver combattuto per unire l'Italia, Garibaldi si ritirò su questa isoletta a coltivare la terra. Morì qui nel 1882.",nl:"Na zijn strijd voor de eenwording van Italië trok Garibaldi zich op dit eilandje terug om te boeren. Hij stierf hier in 1882.",de:"Nach dem Kampf um die Einigung Italiens zog sich Garibaldi als Bauer auf diese kleine Insel zurück. Er starb hier 1882.",fr:"Après avoir combattu pour l'unité italienne, Garibaldi s'est retiré sur cette petite île pour cultiver la terre. Il y est mort en 1882.",es:"Tras luchar por unificar Italia, Garibaldi se retiró a esta islita para cultivar la tierra. Murió aquí en 1882."}],
+  ["La Pelosa","beach",1,"Nurra",{en:"Shallow, pale water and an old watchtower on a rock. In summer you have to book your spot on the sand.",it:"Acqua bassa e chiarissima e un'antica torre su uno scoglio. D'estate il posto sulla sabbia va prenotato.",nl:"Ondiep, lichtblauw water en een oude wachttoren op een rots. In de zomer moet je je plekje op het zand reserveren.",de:"Flaches, helles Wasser und ein alter Wachturm auf einem Felsen. Im Sommer muss man seinen Platz am Strand buchen.",fr:"Une eau claire et peu profonde, et une vieille tour de guet sur un rocher. En été, il faut réserver sa place sur le sable.",es:"Agua clara y poco profunda y una vieja torre sobre una roca. En verano hay que reservar sitio en la arena."}],
+  ["Cagliari","town",1,"Campidano",{en:"Flamingos nest within the city limits, in the salt pans just behind the beach.",it:"I fenicotteri nidificano dentro la città, nelle saline proprio dietro la spiaggia.",nl:"Flamingo's broeden binnen de stadsgrenzen, in de zoutpannen vlak achter het strand.",de:"Flamingos brüten innerhalb der Stadtgrenzen, in den Salinen direkt hinter dem Strand.",fr:"Des flamants roses nichent en pleine ville, dans les salines juste derrière la plage.",es:"Los flamencos anidan dentro de la ciudad, en las salinas justo detrás de la playa."}],
+  ["Nora","site",1,"Golfo degli Angeli",{en:"Phoenicians, Carthaginians and Romans all lived here. The Roman theatre by the sea still hosts summer shows.",it:"Qui vissero Fenici, Cartaginesi e Romani. Il teatro romano sul mare ospita ancora spettacoli d'estate.",nl:"Feniciërs, Carthagers en Romeinen woonden hier allemaal. Het Romeinse theater aan zee wordt 's zomers nog gebruikt.",de:"Phönizier, Karthager und Römer lebten hier. Im römischen Theater am Meer gibt es im Sommer noch Aufführungen.",fr:"Phéniciens, Carthaginois et Romains ont vécu ici. Le théâtre romain au bord de la mer accueille encore des spectacles l'été.",es:"Aquí vivieron fenicios, cartagineses y romanos. El teatro romano junto al mar aún acoge espectáculos en verano."}],
+  ["Tharros","site",1,"Sinis",{en:"A city founded by the Phoenicians on a narrow headland. Two columns still stand facing the sea.",it:"Una città fondata dai Fenici su uno stretto promontorio. Due colonne guardano ancora il mare.",nl:"Een stad, gesticht door de Feniciërs op een smalle landtong. Twee zuilen kijken nog altijd uit over zee.",de:"Eine von den Phöniziern gegründete Stadt auf einer schmalen Landzunge. Zwei Säulen blicken noch aufs Meer.",fr:"Une cité fondée par les Phéniciens sur un étroit promontoire. Deux colonnes font encore face à la mer.",es:"Una ciudad fundada por los fenicios en un estrecho promontorio. Dos columnas siguen mirando al mar."}],
+  ["Sant'Antioco","town",1,"Sulcis",{en:"Home of byssus, or sea silk: a golden thread spun from the fibres of a giant Mediterranean shell.",it:"Patria del bisso, la seta del mare: un filo dorato ricavato dalle fibre di una grande conchiglia mediterranea.",nl:"Thuis van byssus, of zeezijde: een gouden draad, gesponnen uit de vezels van een reuzenschelp uit de Middellandse Zee.",de:"Heimat des Byssus, der Meeresseide: ein goldener Faden aus den Fasern einer großen Mittelmeermuschel.",fr:"Patrie du byssus, la soie de mer : un fil doré tiré des fibres d'un grand coquillage méditerranéen.",es:"Cuna del biso, la seda del mar: un hilo dorado hilado con las fibras de una gran concha mediterránea."}],
+  ["Piscinas","beach",1,"Costa Verde",{en:"Some of Europe's tallest dunes, shaped by the mistral, at the end of a dirt road past old mines.",it:"Alcune delle dune più alte d'Europa, scolpite dal maestrale, in fondo a una strada sterrata tra vecchie miniere.",nl:"Een van de hoogste duinen van Europa, gevormd door de mistral, aan het eind van een onverharde weg langs oude mijnen.",de:"Einige der höchsten Dünen Europas, vom Mistral geformt, am Ende einer Schotterstraße vorbei an alten Minen.",fr:"Parmi les plus hautes dunes d'Europe, sculptées par le mistral, au bout d'une piste qui longe d'anciennes mines.",es:"Algunas de las dunas más altas de Europa, moldeadas por el mistral, al final de una pista junto a viejas minas."}],
+  ["Is Arutas","beach",1,"Sinis",{en:"Not sand but tiny grains of quartz, like rice. Taking any home is forbidden.",it:"Non sabbia ma minuscoli chicchi di quarzo, simili al riso. Portarne via è vietato.",nl:"Geen zand maar piepkleine korrels kwarts, net rijst. Meenemen is verboden.",de:"Kein Sand, sondern winzige Quarzkörner, wie Reis. Mitnehmen ist verboten.",fr:"Pas du sable mais de minuscules grains de quartz, comme du riz. Interdit d'en emporter.",es:"No es arena sino diminutos granos de cuarzo, como arroz. Está prohibido llevárselos."}],
+  ["Tiscali","site",0,"Supramonte",{en:"A Nuragic village hidden inside a collapsed mountain, invisible until you are standing in it.",it:"Un villaggio nuragico nascosto dentro una montagna crollata, invisibile finché non ci sei dentro.",nl:"Een nuraghedorp, verborgen in een ingestorte berg en onzichtbaar tot je er middenin staat.",de:"Ein nuraghisches Dorf im Inneren eines eingestürzten Berges, unsichtbar, bis man darin steht.",fr:"Un village nuragique caché dans une montagne effondrée, invisible tant qu'on n'y est pas.",es:"Un poblado nurágico oculto dentro de una montaña hundida, invisible hasta que estás dentro."}],
+  ["Gola di Gorropu","nature",0,"Supramonte",{en:"One of Europe's deepest canyons, with rock walls so high the sun barely gets in.",it:"Uno dei canyon più profondi d'Europa, con pareti così alte che il sole entra appena.",nl:"Een van de diepste kloven van Europa, met rotswanden zo hoog dat de zon er nauwelijks komt.",de:"Eine der tiefsten Schluchten Europas, mit so hohen Felswänden, dass kaum Sonne hineinfällt.",fr:"L'un des canyons les plus profonds d'Europe, aux parois si hautes que le soleil y entre à peine.",es:"Uno de los cañones más profundos de Europa, con paredes tan altas que apenas entra el sol."}],
+  ["Cala Luna","beach",1,"Golfo di Orosei",{en:"A crescent of sand between cliffs, with big caves at the back. No road: only a boat or a long hike.",it:"Una mezzaluna di sabbia tra le falesie, con grandi grotte sul fondo. Niente strada: solo barca o una lunga camminata.",nl:"Een sikkel van zand tussen de kliffen, met grote grotten achterin. Geen weg: alleen per boot of na een lange wandeling.",de:"Eine Sandsichel zwischen Klippen, dahinter große Höhlen. Keine Straße: nur per Boot oder langer Wanderung.",fr:"Un croissant de sable entre les falaises, avec de grandes grottes au fond. Pas de route : bateau ou longue marche.",es:"Una media luna de arena entre acantilados, con grandes cuevas al fondo. Sin carretera: en barco o tras una larga caminata."}],
+  ["Grotte di Nettuno","nature",1,"Nurra",{en:"654 steps cut into a sea cliff lead down to a cave full of stalactites.",it:"654 gradini scavati nella falesia scendono fino a una grotta piena di stalattiti.",nl:"654 treden, uitgehakt in een zeeklif, leiden naar een grot vol stalactieten.",de:"654 in die Steilküste gehauene Stufen führen hinab zu einer Höhle voller Stalaktiten.",fr:"654 marches taillées dans la falaise mènent à une grotte remplie de stalactites.",es:"654 escalones tallados en el acantilado bajan hasta una cueva llena de estalactitas."}],
+  ["Porto Flavia","site",1,"Iglesiente",{en:"In 1924, engineers dug tunnels through a sea cliff so that ore could be loaded straight onto waiting ships.",it:"Nel 1924 gli ingegneri scavarono gallerie nella falesia per caricare il minerale direttamente sulle navi.",nl:"In 1924 groeven ingenieurs tunnels door een zeeklif, zodat erts direct op de wachtende schepen kon worden geladen.",de:"1924 trieben Ingenieure Tunnel durch die Steilküste, um Erz direkt auf wartende Schiffe zu laden.",fr:"En 1924, des ingénieurs ont creusé des galeries dans la falaise pour charger le minerai directement sur les navires.",es:"En 1924, unos ingenieros excavaron túneles en el acantilado para cargar el mineral directamente en los barcos."}],
+  ["Asinara","island",1,"Nurra",{en:"Once a prison island, now a national park, where small white donkeys roam free.",it:"Un tempo isola-carcere, oggi parco nazionale dove gli asinelli bianchi vivono liberi.",nl:"Ooit een gevangeniseiland, nu een nationaal park waar kleine witte ezels vrij rondlopen.",de:"Einst Gefängnisinsel, heute Nationalpark, in dem kleine weiße Esel frei herumlaufen.",fr:"Autrefois île-prison, aujourd'hui parc national où de petits ânes blancs vivent en liberté.",es:"Antes isla prisión, hoy parque nacional donde pequeños burros blancos viven en libertad."}],
+  ["Oristano","town",1,"Campidano",{en:"At Carnival, a masked rider gallops at full speed and tries to spear a star hanging over the street.",it:"A Carnevale un cavaliere mascherato lanciato al galoppo cerca di infilzare una stella appesa sopra la strada.",nl:"Met carnaval galoppeert een gemaskerde ruiter op volle snelheid en probeert een ster te spietsen die boven de straat hangt.",de:"Im Karneval versucht ein maskierter Reiter im vollen Galopp, einen über der Straße hängenden Stern aufzuspießen.",fr:"Au carnaval, un cavalier masqué lancé au galop tente d'embrocher une étoile suspendue au-dessus de la rue.",es:"En Carnaval, un jinete enmascarado a pleno galope intenta ensartar una estrella colgada sobre la calle."}],
+  ["Nuoro","town",0,"Barbagia",{en:"Birthplace of Grazia Deledda, who won the Nobel Prize in Literature for 1926.",it:"Città natale di Grazia Deledda, premio Nobel per la letteratura del 1926.",nl:"Geboorteplaats van Grazia Deledda, winnares van de Nobelprijs voor de Literatuur van 1926.",de:"Geburtsort von Grazia Deledda, Literaturnobelpreisträgerin des Jahres 1926.",fr:"Ville natale de Grazia Deledda, prix Nobel de littérature 1926.",es:"Ciudad natal de Grazia Deledda, premio Nobel de Literatura de 1926."}],
+  ["Calangianus","village",0,"Gallura",{en:"The cork in your wine bottle may well have started out in the workshops of this granite village.",it:"Il tappo della tua bottiglia di vino può benissimo essere nato nei laboratori di questo paese di granito.",nl:"De kurk in je wijnfles kan zomaar uit de werkplaatsen van dit granieten dorp komen.",de:"Der Korken deiner Weinflasche könnte gut aus den Werkstätten dieses Granitdorfes stammen.",fr:"Le bouchon de votre bouteille de vin vient peut-être des ateliers de ce village de granit.",es:"El corcho de tu botella de vino bien puede haber salido de los talleres de este pueblo de granito."}],
+  ["Ulassai","village",0,"Ogliastra",{en:"In 1981, the artist Maria Lai and the villagers tied every house to the next, and to the mountain, with a blue ribbon.",it:"Nel 1981 l'artista Maria Lai e gli abitanti legarono tutte le case, e poi la montagna, con un nastro celeste.",nl:"In 1981 bonden kunstenares Maria Lai en de dorpelingen alle huizen aan elkaar en aan de berg, met een blauw lint.",de:"1981 verbanden die Künstlerin Maria Lai und die Bewohner alle Häuser und den Berg mit einem blauen Band.",fr:"En 1981, l'artiste Maria Lai et les habitants ont relié toutes les maisons, et la montagne, avec un ruban bleu.",es:"En 1981, la artista Maria Lai y los vecinos unieron todas las casas, y la montaña, con una cinta azul."}],
+  ["San Sperate","village",0,"Campidano",{en:"A village of murals, and of stones that sing: a local sculptor cut them so they ring when you touch them.",it:"Un paese di murales e di pietre che cantano: uno scultore del posto le ha incise perché suonino al tocco.",nl:"Een dorp vol muurschilderingen en zingende stenen: een plaatselijke beeldhouwer sneed ze zo dat ze klinken als je ze aanraakt.",de:"Ein Dorf der Wandbilder und singenden Steine: Ein örtlicher Bildhauer schnitt sie so, dass sie bei Berührung klingen.",fr:"Un village de fresques et de pierres qui chantent : un sculpteur du pays les a taillées pour qu'elles sonnent au toucher.",es:"Un pueblo de murales y de piedras que cantan: un escultor local las talló para que suenen al tocarlas."}],
+  ["Giara di Gesturi","nature",0,"Marmilla",{en:"A high basalt plateau where small wild horses drink from seasonal ponds.",it:"Un altopiano di basalto dove piccoli cavalli selvatici si abbeverano agli stagni stagionali.",nl:"Een hoog basaltplateau waar kleine wilde paarden drinken uit plassen die er alleen 's winters en in de lente staan.",de:"Eine hohe Basalthochebene, auf der kleine Wildpferde aus jahreszeitlichen Tümpeln trinken.",fr:"Un haut plateau de basalte où de petits chevaux sauvages s'abreuvent dans des mares saisonnières.",es:"Una alta meseta de basalto donde pequeños caballos salvajes beben en charcas estacionales."}],
+  ["Capo d'Orso","nature",1,"Gallura",{en:"Wind has carved a block of granite into a giant bear looking out to sea.",it:"Il vento ha scolpito un masso di granito a forma di orso gigante che guarda il mare.",nl:"De wind heeft een blok graniet uitgesleten tot een reusachtige beer die over zee uitkijkt.",de:"Der Wind hat aus einem Granitblock einen riesigen Bären geformt, der aufs Meer blickt.",fr:"Le vent a sculpté un bloc de granit en ours géant qui regarde la mer.",es:"El viento ha tallado un bloque de granito en forma de oso gigante que mira al mar."}],
+  ["Sadali","village",0,"Barbagia di Seulo",{en:"A waterfall runs right through the middle of this little mountain village.",it:"Una cascata scorre proprio in mezzo a questo piccolo paese di montagna.",nl:"Een waterval loopt dwars door het midden van dit kleine bergdorp.",de:"Ein Wasserfall fließt mitten durch dieses kleine Bergdorf.",fr:"Une cascade coule en plein milieu de ce petit village de montagne.",es:"Una cascada corre justo por el centro de este pequeño pueblo de montaña."}],
+  ["Santa Cristina","site",0,"Guilcer",{en:"Stone steps lead down into a Nuragic sacred well, so exact it looks as if it was built yesterday.",it:"Gradini di pietra scendono in un pozzo sacro nuragico, così preciso da sembrare costruito ieri.",nl:"Stenen treden leiden naar een heilige nuraghebron, zo precies gebouwd dat het lijkt alsof hij gisteren klaar was.",de:"Steinstufen führen in einen nuraghischen Brunnentempel, so exakt, als wäre er gestern gebaut.",fr:"Des marches de pierre descendent dans un puits sacré nuragique, si précis qu'il semble bâti d'hier.",es:"Escalones de piedra bajan a un pozo sagrado nurágico, tan exacto que parece construido ayer."}],
+  ["San Salvatore di Sinis","village",1,"Sinis",{en:"A deserted little village that served as the set for spaghetti westerns.",it:"Un paesino deserto che ha fatto da set agli spaghetti western.",nl:"Een uitgestorven dorpje dat diende als decor voor spaghettiwesterns.",de:"Ein verlassenes Dörfchen, das als Kulisse für Italowestern diente.",fr:"Un petit village désert qui a servi de décor à des westerns spaghetti.",es:"Un pueblecito desierto que sirvió de plató para spaghetti westerns."}],
+  ["Grotta del Bue Marino","nature",1,"Golfo di Orosei",{en:"The cave takes its name from what fishermen called the monk seal, which once sheltered here.",it:"La grotta prende il nome da come i pescatori chiamavano la foca monaca, che un tempo si rifugiava qui.",nl:"De grot is genoemd naar het woord dat vissers gebruikten voor de monniksrob, die hier vroeger schuilde.",de:"Die Höhle ist nach dem Namen benannt, den Fischer der Mönchsrobbe gaben, die hier einst Schutz fand.",fr:"La grotte doit son nom à la façon dont les pêcheurs appelaient le phoque moine, qui s'y réfugiait autrefois.",es:"La cueva debe su nombre a como los pescadores llamaban a la foca monje, que antes se refugiaba aquí."}],
+  ["Oliena","village",0,"Supramonte",{en:"Gabriele D'Annunzio praised the red wine from this village, and his name for it, Nepente, stuck.",it:"Gabriele D'Annunzio lodò il vino rosso di questo paese, e il nome che gli diede, Nepente, è rimasto.",nl:"Gabriele D'Annunzio prees de rode wijn uit dit dorp, en zijn naam ervoor, Nepente, bleef hangen.",de:"Gabriele D'Annunzio lobte den Rotwein dieses Dorfes, und sein Name dafür, Nepente, blieb haften.",fr:"Gabriele D'Annunzio a vanté le vin rouge de ce village, et le nom qu'il lui a donné, Nepente, est resté.",es:"Gabriele D'Annunzio elogió el vino tinto de este pueblo, y el nombre que le dio, Nepente, se quedó."}],
+  ["Cala Brandinchi","beach",1,"Gallura",{en:"The water is so shallow and clear that people call this beach Little Tahiti.",it:"L'acqua è così bassa e trasparente che questa spiaggia è chiamata la Piccola Tahiti.",nl:"Het water is zo ondiep en helder dat dit strand Klein Tahiti wordt genoemd.",de:"Das Wasser ist so flach und klar, dass man diesen Strand Klein-Tahiti nennt.",fr:"L'eau est si claire et peu profonde qu'on surnomme cette plage la Petite Tahiti.",es:"El agua es tan clara y poco profunda que a esta playa la llaman la Pequeña Tahití."}],
+  ["Stintino","village",1,"Nurra",{en:"Founded in 1885 by 45 families who had to leave a nearby island to make way for a prison.",it:"Fondato nel 1885 da 45 famiglie costrette a lasciare un'isola vicina per far posto a un carcere.",nl:"Gesticht in 1885 door 45 families die van een nabijgelegen eiland weg moesten om plaats te maken voor een gevangenis.",de:"1885 von 45 Familien gegründet, die eine nahe Insel für ein Gefängnis räumen mussten.",fr:"Fondé en 1885 par 45 familles contraintes de quitter une île voisine pour laisser la place à une prison.",es:"Fundado en 1885 por 45 familias obligadas a dejar una isla cercana para dar paso a una prisión."}],
+  ["Ales","village",0,"Marmilla",{en:"Antonio Gramsci, the political thinker, was born here in 1891.",it:"Antonio Gramsci, il pensatore politico, nacque qui nel 1891.",nl:"De politiek denker Antonio Gramsci werd hier in 1891 geboren.",de:"Der politische Denker Antonio Gramsci wurde hier 1891 geboren.",fr:"Le penseur politique Antonio Gramsci est né ici en 1891.",es:"El pensador político Antonio Gramsci nació aquí en 1891."}],
+  ["Gavoi","village",0,"Barbagia",{en:"Every summer, this small stone village hosts a well-known literary festival.",it:"Ogni estate questo piccolo paese di pietra ospita un noto festival letterario.",nl:"Elke zomer is dit kleine stenen dorp het toneel van een bekend literatuurfestival.",de:"Jeden Sommer findet in diesem kleinen Steindorf ein bekanntes Literaturfestival statt.",fr:"Chaque été, ce petit village de pierre accueille un festival littéraire réputé.",es:"Cada verano, este pequeño pueblo de piedra acoge un conocido festival literario."}],
+  ["Sassari","town",0,"Turritano",{en:"Every 14 August, giant wooden candlesticks are carried dancing through the streets.",it:"Ogni 14 agosto, giganteschi candelieri di legno sfilano danzando per le strade.",nl:"Elk jaar op 14 augustus worden reusachtige houten kandelaars dansend door de straten gedragen.",de:"Jedes Jahr am 14. August werden riesige Holzkerzen tanzend durch die Straßen getragen.",fr:"Chaque 14 août, de gigantesques chandeliers de bois sont portés en dansant dans les rues.",es:"Cada 14 de agosto, gigantescos candelabros de madera recorren las calles bailando."}],
+  ["S'Archittu","nature",1,"Montiferru",{en:"A natural limestone arch over the sea. In summer, brave swimmers jump from the top.",it:"Un arco naturale di calcare sul mare. D'estate i più coraggiosi si tuffano dalla cima.",nl:"Een natuurlijke boog van kalksteen boven zee. 's Zomers springen de dappersten van de top.",de:"Ein natürlicher Kalksteinbogen über dem Meer. Im Sommer springen Mutige von oben hinein.",fr:"Une arche naturelle calcaire au-dessus de la mer. L'été, les plus courageux plongent du sommet.",es:"Un arco natural de caliza sobre el mar. En verano, los más valientes saltan desde arriba."}],
+  ["Laconi","village",0,"Sarcidano",{en:"A museum here holds carved standing stones from prehistoric times, with faces and daggers.",it:"Un museo custodisce statue-menhir preistoriche, con volti e pugnali scolpiti.",nl:"Een museum hier bewaart prehistorische staande stenen, met uitgehakte gezichten en dolken.",de:"Ein Museum zeigt prähistorische Menhir-Statuen mit eingemeißelten Gesichtern und Dolchen.",fr:"Un musée y abrite des statues-menhirs préhistoriques, avec visages et poignards sculptés.",es:"Un museo guarda estatuas-menhir prehistóricas, con rostros y puñales tallados."}],
+  ["Tuerredda","beach",1,"Costa del Sud",{en:"A white bay with a little islet close enough to swim to.",it:"Una baia bianca con un isolotto abbastanza vicino da raggiungerlo a nuoto.",nl:"Een witte baai met een eilandje dat dicht genoeg ligt om naartoe te zwemmen.",de:"Eine weiße Bucht mit einem Inselchen, das man schwimmend erreichen kann.",fr:"Une baie blanche avec un îlot assez proche pour y aller à la nage.",es:"Una bahía blanca con un islote lo bastante cerca como para ir nadando."}],
+  ["Su Gologone","nature",0,"Supramonte",{en:"Water pours out of a cleft in the limestone. Divers have gone very deep without finding where it ends.",it:"L'acqua sgorga da una fenditura nel calcare. I sub sono scesi molto in profondità senza trovarne la fine.",nl:"Water stroomt uit een spleet in de kalksteen. Duikers zijn heel diep geweest zonder het einde te vinden.",de:"Wasser strömt aus einer Spalte im Kalkstein. Taucher drangen sehr tief vor, ohne das Ende zu finden.",fr:"L'eau jaillit d'une fente dans le calcaire. Des plongeurs sont descendus très bas sans en trouver le fond.",es:"El agua brota de una grieta en la caliza. Los buzos han bajado muchísimo sin encontrar el final."}],
+  ["Anghelu Ruju","site",0,"Nurra",{en:"The largest prehistoric cemetery in northern Sardinia: 38 tombs cut into the sandstone.",it:"Il più grande cimitero preistorico del nord Sardegna: 38 tombe scavate nell'arenaria.",nl:"De grootste prehistorische begraafplaats van Noord-Sardinië: 38 graven uitgehakt in de zandsteen.",de:"Das größte prähistorische Gräberfeld Nordsardiniens: 38 in den Sandstein gehauene Gräber.",fr:"Le plus grand cimetière préhistorique du nord de la Sardaigne : 38 tombes creusées dans le grès.",es:"El mayor cementerio prehistórico del norte de Cerdeña: 38 tumbas excavadas en la arenisca."}],
+  ["Santa Maria Navarrese","village",1,"Ogliastra",{en:"Legend credits the little church here to a princess of Navarre who survived a shipwreck.",it:"La leggenda attribuisce la chiesetta a una principessa di Navarra scampata a un naufragio.",nl:"Volgens de legende liet een prinses uit Navarra die een schipbreuk overleefde het kerkje hier bouwen.",de:"Der Legende nach ließ eine Prinzessin aus Navarra, die einen Schiffbruch überlebte, die kleine Kirche bauen.",fr:"Selon la légende, la petite église est due à une princesse de Navarre rescapée d'un naufrage.",es:"La leyenda atribuye la iglesita a una princesa de Navarra que sobrevivió a un naufragio."}],
+  ["Bitti","village",0,"Barbagia",{en:"A home of cantu a tenore, the four-voice male singing on UNESCO's heritage list.",it:"Una patria del canto a tenore, il canto maschile a quattro voci iscritto nel patrimonio UNESCO.",nl:"Een bakermat van cantu a tenore, de vierstemmige mannenzang op de UNESCO-lijst.",de:"Eine Heimat des Cantu a Tenore, des vierstimmigen Männergesangs auf der UNESCO-Liste.",fr:"Un berceau du cantu a tenore, chant masculin à quatre voix inscrit à l'UNESCO.",es:"Una cuna del cantu a tenore, el canto masculino a cuatro voces de la lista de la UNESCO."}],
+  ["Capo Testa","nature",1,"Gallura",{en:"The Romans quarried granite on this headland. The wind has carved the rest.",it:"I Romani estraevano granito su questo promontorio. Il resto l'ha scolpito il vento.",nl:"De Romeinen haalden graniet uit deze landtong. De rest heeft de wind uitgehouwen.",de:"Die Römer brachen auf dieser Landzunge Granit. Den Rest hat der Wind geformt.",fr:"Les Romains extrayaient le granit sur ce promontoire. Le vent a sculpté le reste.",es:"Los romanos extraían granito en este cabo. El resto lo ha tallado el viento."}],
+  ["Castiadas","site",1,"Sarrabus",{en:"In the 19th century, convicts were sent here to clear a plain full of malaria. Their huge prison still stands.",it:"Nell'Ottocento i detenuti furono mandati qui a bonificare una piana malarica. Il grande carcere è ancora in piedi.",nl:"In de 19e eeuw werden gevangenen hierheen gestuurd om een malariavlakte te ontginnen. Hun enorme gevangenis staat er nog.",de:"Im 19. Jahrhundert schickte man Sträflinge hierher, um eine Malaria-Ebene urbar zu machen. Das riesige Gefängnis steht noch.",fr:"Au XIXe siècle, des détenus furent envoyés ici pour assainir une plaine infestée de malaria. Leur immense prison est toujours debout.",es:"En el siglo XIX enviaron aquí a presos para sanear una llanura con malaria. Su enorme prisión sigue en pie."}],
+  ["Punta La Marmora","nature",0,"Gennargentu",{en:"The highest point in Sardinia, at 1,834 metres. On clear days you can see the sea on both sides.",it:"Il punto più alto della Sardegna, a 1.834 metri. Nelle giornate limpide si vede il mare da entrambi i lati.",nl:"Het hoogste punt van Sardinië, op 1834 meter. Op heldere dagen zie je aan beide kanten de zee.",de:"Der höchste Punkt Sardiniens mit 1834 Metern. An klaren Tagen sieht man auf beiden Seiten das Meer.",fr:"Le point culminant de la Sardaigne, à 1 834 mètres. Par temps clair, on voit la mer des deux côtés.",es:"El punto más alto de Cerdeña, a 1.834 metros. En días claros se ve el mar a ambos lados."}],
+  ["Grotta di Ispinigoli","nature",0,"Supramonte",{en:"A single stone column 38 metres tall joins the floor and the ceiling of this cave.",it:"Un'unica colonna di pietra alta 38 metri unisce il pavimento e la volta di questa grotta.",nl:"Eén stenen zuil van 38 meter hoog verbindt de vloer en het plafond van deze grot.",de:"Eine einzige 38 Meter hohe Steinsäule verbindet Boden und Decke dieser Höhle.",fr:"Une unique colonne de pierre haute de 38 mètres relie le sol et la voûte de cette grotte.",es:"Una sola columna de piedra de 38 metros une el suelo y el techo de esta cueva."}],
+  ["Fonni","village",0,"Barbagia",{en:"At around 1,000 metres, one of the highest villages on the island.",it:"A circa 1.000 metri, uno dei paesi più alti dell'isola.",nl:"Op zo'n 1000 meter hoogte een van de hoogste dorpen van het eiland.",de:"Auf rund 1000 Metern eines der höchsten Dörfer der Insel.",fr:"À environ 1 000 mètres, l'un des villages les plus hauts de l'île.",es:"A unos 1.000 metros, uno de los pueblos más altos de la isla."}],
+  ["Tonara","village",0,"Mandrolisai",{en:"Known across the island for its nougat and its hand-beaten cowbells.",it:"Noto in tutta l'isola per il torrone e per i campanacci battuti a mano.",nl:"Op het hele eiland bekend om zijn noga en handgesmede koeienbellen.",de:"Auf der ganzen Insel bekannt für Nougat und handgeschmiedete Kuhglocken.",fr:"Connu dans toute l'île pour son nougat et ses sonnailles martelées à la main.",es:"Conocido en toda la isla por su turrón y sus cencerros batidos a mano."}],
+  ["Coddu Vecchiu","site",0,"Gallura",{en:"A Giants' Tomb with a carved central slab about four metres high.",it:"Una Tomba dei Giganti con una stele centrale scolpita alta circa quattro metri.",nl:"Een reuzengraf met een bewerkte middensteen van zo'n vier meter hoog.",de:"Ein Gigantengrab mit einer behauenen Mittelstele von etwa vier Metern Höhe.",fr:"Une tombe de géants avec une stèle centrale sculptée d'environ quatre mètres.",es:"Una tumba de gigantes con una estela central tallada de unos cuatro metros."}],
+  ["Villasimius","town",1,"Sarrabus",{en:"A statue of the Madonna stands on the seabed off this coast, and divers go down to visit her.",it:"Una statua della Madonna si trova sul fondale davanti a questa costa, e i sub scendono a visitarla.",nl:"Op de zeebodem voor deze kust staat een Mariabeeld, en duikers gaan haar opzoeken.",de:"Vor dieser Küste steht eine Marienstatue auf dem Meeresgrund, und Taucher besuchen sie.",fr:"Une statue de la Vierge repose sur le fond marin au large de cette côte, et les plongeurs vont la voir.",es:"Una estatua de la Virgen se alza en el fondo del mar frente a esta costa, y los buzos bajan a visitarla."}],
+  ["Cabras","town",1,"Sinis",{en:"The museum here shows giant stone warriors almost 3,000 years old, found by a farmer in 1974.",it:"Il museo espone giganteschi guerrieri di pietra di quasi 3.000 anni, trovati da un contadino nel 1974.",nl:"Het museum hier toont reusachtige stenen krijgers van bijna 3000 jaar oud, in 1974 gevonden door een boer.",de:"Das Museum zeigt riesige, fast 3000 Jahre alte Steinkrieger, die 1974 ein Bauer fand.",fr:"Le musée présente des guerriers de pierre géants vieux de près de 3 000 ans, découverts par un paysan en 1974.",es:"El museo muestra gigantescos guerreros de piedra de casi 3.000 años, hallados por un campesino en 1974."}],
+  ["Arbatax","town",1,"Ogliastra",{en:"Red porphyry rocks rise out of the sea right next to the harbour.",it:"Rocce rosse di porfido emergono dal mare proprio accanto al porto.",nl:"Rode porfierrotsen rijzen uit zee, vlak naast de haven.",de:"Rote Porphyrfelsen ragen direkt neben dem Hafen aus dem Meer.",fr:"Des roches de porphyre rouge sortent de la mer juste à côté du port.",es:"Rocas rojas de pórfido emergen del mar justo al lado del puerto."}],
+  ["Aritzo","village",0,"Barbagia di Belvì",{en:"People here once stored mountain snow to sell in summer, and still make a lemon sorbet the old way.",it:"Qui un tempo si conservava la neve di montagna per venderla d'estate, e si prepara ancora un sorbetto al limone come una volta.",nl:"Vroeger bewaarden ze hier bergsneeuw om 's zomers te verkopen, en ze maken nog steeds citroensorbet op de oude manier.",de:"Früher lagerte man hier Bergschnee für den Sommerverkauf, und noch heute macht man Zitronensorbet auf alte Art.",fr:"On y conservait autrefois la neige des montagnes pour la vendre l'été, et on y fait encore un sorbet au citron à l'ancienne.",es:"Aquí se guardaba la nieve de la montaña para venderla en verano, y aún se hace un sorbete de limón a la antigua."}],
+  ["Galtellì","village",0,"Baronia",{en:"The village where Grazia Deledda set her novel Reeds in the Wind.",it:"Il paese in cui Grazia Deledda ambientò il romanzo Canne al vento.",nl:"Het dorp waar Grazia Deledda haar roman Riet in de wind liet spelen.",de:"Das Dorf, in dem Grazia Deledda ihren Roman Schilf im Wind spielen lässt.",fr:"Le village où Grazia Deledda a situé son roman Roseaux au vent.",es:"El pueblo donde Grazia Deledda ambientó su novela Cañas al viento."}],
+  ["Iglesias","town",0,"Iglesiente",{en:"In the Middle Ages, this silver-mining town had its own written code of laws.",it:"Nel Medioevo questa città delle miniere d'argento aveva un proprio codice di leggi scritto.",nl:"In de middeleeuwen had deze zilvermijnstad haar eigen geschreven wetboek.",de:"Im Mittelalter besaß diese Silberminenstadt ein eigenes geschriebenes Gesetzbuch.",fr:"Au Moyen Âge, cette ville de mines d'argent avait son propre code de lois écrit.",es:"En la Edad Media, esta ciudad de minas de plata tenía su propio código de leyes escrito."}],
+  ["Tempio Pausania","town",0,"Gallura",{en:"A town of grey granite in the hills. The singer Fabrizio De André kept a farm just outside it.",it:"Una città di granito grigio tra le colline. Il cantautore Fabrizio De André aveva una tenuta qui vicino.",nl:"Een stad van grijs graniet in de heuvels. Zanger Fabrizio De André had er vlakbij een boerderij.",de:"Eine Stadt aus grauem Granit in den Hügeln. Der Liedermacher Fabrizio De André hatte ganz in der Nähe einen Hof.",fr:"Une ville de granit gris dans les collines. Le chanteur Fabrizio De André avait une ferme tout près.",es:"Una ciudad de granito gris entre colinas. El cantautor Fabrizio De André tenía una finca muy cerca."}],
+  ["Olbia","town",1,"Gallura",{en:"Digging a road tunnel under the old harbour, workers found the wrecks of Roman and medieval ships.",it:"Scavando un tunnel sotto il vecchio porto, gli operai trovarono i relitti di navi romane e medievali.",nl:"Bij het graven van een tunnel onder de oude haven vonden arbeiders wrakken van Romeinse en middeleeuwse schepen.",de:"Beim Bau eines Tunnels unter dem alten Hafen stieß man auf Wracks römischer und mittelalterlicher Schiffe.",fr:"En creusant un tunnel sous le vieux port, des ouvriers ont découvert des épaves de navires romains et médiévaux.",es:"Al excavar un túnel bajo el puerto viejo, los obreros hallaron restos de barcos romanos y medievales."}],
+  ["Tempio di Antas","site",0,"Iglesiente",{en:"A Roman temple in a quiet green valley, dedicated to Sardus Pater, father of the island's people.",it:"Un tempio romano in una valle verde e silenziosa, dedicato al Sardus Pater, padre del popolo sardo.",nl:"Een Romeinse tempel in een stil groen dal, gewijd aan Sardus Pater, de vader van het volk van het eiland.",de:"Ein römischer Tempel in einem stillen grünen Tal, geweiht dem Sardus Pater, dem Vater des Inselvolkes.",fr:"Un temple romain dans une vallée verte et paisible, dédié à Sardus Pater, père du peuple de l'île.",es:"Un templo romano en un valle verde y tranquilo, dedicado a Sardus Pater, padre del pueblo de la isla."}],
+  ["Posada","village",1,"Baronia",{en:"Legend says the castle here broke a siege thanks to a pigeon stuffed with broad beans.",it:"La leggenda dice che il castello ruppe un assedio grazie a un piccione imbottito di fave.",nl:"Volgens de legende doorbrak het kasteel hier een belegering dankzij een duif volgepropt met tuinbonen.",de:"Der Legende nach beendete die Burg eine Belagerung dank einer mit Saubohnen gestopften Taube.",fr:"Selon la légende, le château a brisé un siège grâce à un pigeon gavé de fèves.",es:"Cuenta la leyenda que el castillo rompió un asedio gracias a una paloma rellena de habas."}],
+  ["Lollove","village",0,"Barbagia",{en:"Legend says nuns cursed this tiny village so that it would never grow and never die.",it:"La leggenda dice che alcune suore maledirono questo minuscolo paese: non sarebbe mai cresciuto né scomparso.",nl:"Volgens de legende vervloekten nonnen dit piepkleine dorp: het zou nooit groeien en nooit verdwijnen.",de:"Der Legende nach verfluchten Nonnen dieses winzige Dorf: Es solle nie wachsen und nie sterben.",fr:"Selon la légende, des religieuses ont maudit ce minuscule village pour qu'il ne grandisse ni ne meure jamais.",es:"Cuenta la leyenda que unas monjas maldijeron este diminuto pueblo para que nunca creciera ni desapareciera."}],
+  ["Gairo Vecchio","village",0,"Ogliastra",{en:"After the flood of 1951 everyone left. The empty houses still cling to the slope.",it:"Dopo l'alluvione del 1951 se ne andarono tutti. Le case vuote restano aggrappate al pendio.",nl:"Na de overstroming van 1951 vertrok iedereen. De lege huizen klampen zich nog aan de helling vast.",de:"Nach der Flut von 1951 gingen alle fort. Die leeren Häuser klammern sich noch an den Hang.",fr:"Après l'inondation de 1951, tout le monde est parti. Les maisons vides s'accrochent encore à la pente.",es:"Tras la inundación de 1951 se marcharon todos. Las casas vacías siguen aferradas a la ladera."}],
+  ["Carbonia","town",0,"Sulcis",{en:"Built from nothing by the Fascist regime and opened in 1938, to house workers for the coal mines.",it:"Costruita dal nulla dal regime fascista e inaugurata nel 1938 per ospitare i lavoratori delle miniere di carbone.",nl:"Uit het niets gebouwd door het fascistische regime en in 1938 geopend, als woonplaats voor de arbeiders uit de kolenmijnen.",de:"Vom faschistischen Regime aus dem Nichts gebaut und 1938 eröffnet, für die Arbeiter der Kohlegruben.",fr:"Construite à partir de rien par le régime fasciste et inaugurée en 1938 pour loger les ouvriers des mines de charbon.",es:"Construida de la nada por el régimen fascista e inaugurada en 1938 para alojar a los obreros de las minas de carbón."}],
+  ["Ozieri","town",0,"Logudoro",{en:"A whole prehistoric culture of Sardinia is named after this town.",it:"Un'intera cultura preistorica della Sardegna porta il nome di questa città.",nl:"Een hele prehistorische cultuur van Sardinië is naar deze stad genoemd.",de:"Eine ganze prähistorische Kultur Sardiniens ist nach dieser Stadt benannt.",fr:"Toute une culture préhistorique de Sardaigne porte le nom de cette ville.",es:"Toda una cultura prehistórica de Cerdeña lleva el nombre de esta ciudad."}],
+  ["Montevecchio","village",0,"Arburese",{en:"Once one of Italy's biggest lead and zinc mines, with a grand palace for its director.",it:"Un tempo una delle più grandi miniere di piombo e zinco d'Italia, con un grande palazzo per il direttore.",nl:"Ooit een van de grootste lood- en zinkmijnen van Italië, met een statig paleis voor de directeur.",de:"Einst eine der größten Blei- und Zinkminen Italiens, mit einem prächtigen Palast für den Direktor.",fr:"Autrefois l'une des plus grandes mines de plomb et de zinc d'Italie, avec un beau palais pour son directeur.",es:"Antaño una de las mayores minas de plomo y zinc de Italia, con un gran palacio para su director."}],
+  ["Tavolara","island",1,"Gallura",{en:"A huge slab of limestone whose only family called themselves kings in the 1800s. Their descendants still live here.",it:"Un enorme blocco di calcare la cui unica famiglia, nell'Ottocento, si proclamò re. I discendenti vivono ancora qui.",nl:"Een enorm blok kalksteen waarvan de enige familie zich in de 19e eeuw koning noemde. Hun nazaten wonen er nog.",de:"Ein gewaltiger Kalksteinblock, dessen einzige Familie sich im 19. Jahrhundert zu Königen erklärte. Die Nachfahren leben noch hier.",fr:"Un énorme bloc calcaire dont l'unique famille s'est proclamée royale au XIXe siècle. Ses descendants y vivent encore.",es:"Un enorme bloque calizo cuya única familia se proclamó reina en el siglo XIX. Sus descendientes siguen viviendo aquí."}],
+  ["Baunei","village",1,"Ogliastra",{en:"On the plateau above the village, a shaft opens 270 metres straight down: Europe's deepest single-drop chasm.",it:"Sull'altopiano sopra il paese si apre un pozzo di 270 metri: la voragine a campata unica più profonda d'Europa.",nl:"Op het plateau boven het dorp gaapt een schacht van 270 meter recht omlaag, de diepste enkelvoudige afgrond van Europa.",de:"Auf der Hochebene über dem Dorf öffnet sich ein 270 Meter tiefer Schacht, Europas tiefster Abgrund in einem Stück.",fr:"Sur le plateau au-dessus du village s'ouvre un puits de 270 mètres, le plus profond gouffre d'un seul tenant d'Europe.",es:"En la meseta sobre el pueblo se abre un pozo de 270 metros, la sima de una sola caída más profunda de Europa."}],
+  ["Aggius","village",0,"Gallura",{en:"A granite village with a museum devoted to its history of banditry.",it:"Un paese di granito con un museo dedicato alla sua storia di banditismo.",nl:"Een granieten dorp met een museum over zijn geschiedenis van struikrovers.",de:"Ein Granitdorf mit einem Museum über seine Banditengeschichte.",fr:"Un village de granit avec un musée consacré à son histoire de banditisme.",es:"Un pueblo de granito con un museo dedicado a su historia de bandoleros."}],
+  ["Chia","beach",1,"Costa del Sud",{en:"Dunes covered in juniper, a Spanish watchtower, and flamingos in the lagoon behind the beach.",it:"Dune coperte di ginepri, una torre spagnola e fenicotteri nella laguna dietro la spiaggia.",nl:"Duinen vol jeneverbes, een Spaanse wachttoren en flamingo's in de lagune achter het strand.",de:"Mit Wacholder bewachsene Dünen, ein spanischer Wachturm und Flamingos in der Lagune hinter dem Strand.",fr:"Des dunes couvertes de genévriers, une tour espagnole et des flamants roses dans la lagune derrière la plage.",es:"Dunas cubiertas de enebros, una torre española y flamencos en la laguna tras la playa."}],
+  ["Assemini","town",0,"Campidano",{en:"Potters have shaped clay here for centuries, and the town is still known for its ceramics.",it:"Qui i vasai lavorano l'argilla da secoli e il paese è ancora noto per le sue ceramiche.",nl:"Pottenbakkers werken hier al eeuwenlang met klei, en de plaats staat nog altijd bekend om haar keramiek.",de:"Töpfer formen hier seit Jahrhunderten Ton, und der Ort ist noch immer für seine Keramik bekannt.",fr:"Les potiers y travaillent l'argile depuis des siècles, et la ville reste connue pour ses céramiques.",es:"Los alfareros trabajan aquí el barro desde hace siglos, y el lugar sigue siendo conocido por su cerámica."}],
+  ["Berchidda","village",0,"Monte Acuto",{en:"Hometown of trumpeter Paolo Fresu, who runs a jazz festival here every August.",it:"Paese natale del trombettista Paolo Fresu, che qui organizza un festival jazz ogni agosto.",nl:"Geboortedorp van trompettist Paolo Fresu, die hier elke augustus een jazzfestival organiseert.",de:"Heimatort des Trompeters Paolo Fresu, der hier jeden August ein Jazzfestival veranstaltet.",fr:"Village natal du trompettiste Paolo Fresu, qui y organise un festival de jazz chaque août.",es:"Pueblo natal del trompetista Paolo Fresu, que organiza aquí un festival de jazz cada agosto."}],
+  ["Buggerru","village",1,"Iglesiente",{en:"In 1904, soldiers fired on striking miners here. Italy's first general strike followed.",it:"Nel 1904 i soldati spararono sui minatori in sciopero. Ne seguì il primo sciopero generale d'Italia.",nl:"In 1904 schoten soldaten hier op stakende mijnwerkers. Daarna volgde de eerste algemene staking van Italië.",de:"1904 schossen Soldaten hier auf streikende Bergleute. Darauf folgte Italiens erster Generalstreik.",fr:"En 1904, des soldats ont tiré ici sur des mineurs en grève. La première grève générale d'Italie a suivi.",es:"En 1904, los soldados dispararon aquí contra mineros en huelga. Siguió la primera huelga general de Italia."}],
+  ["Pan di Zucchero","nature",1,"Iglesiente",{en:"A pale limestone stack 133 metres high, standing alone just off the cliffs.",it:"Un faraglione di calcare chiaro alto 133 metri, solitario davanti alle scogliere.",nl:"Een lichte kalkstenen rots van 133 meter hoog, moederziel alleen voor de kliffen.",de:"Ein heller, 133 Meter hoher Kalkfelsen, der einsam vor den Klippen steht.",fr:"Un rocher calcaire clair de 133 mètres, seul au large des falaises.",es:"Un farallón de caliza clara de 133 metros, solitario frente a los acantilados."}],
+  ["Porto Pino","beach",1,"Sulcis",{en:"Dunes as white as snow rise behind this long beach.",it:"Dune bianche come la neve si alzano dietro questa lunga spiaggia.",nl:"Duinen, wit als sneeuw, rijzen op achter dit lange strand.",de:"Schneeweiße Dünen erheben sich hinter diesem langen Strand.",fr:"Des dunes blanches comme la neige s'élèvent derrière cette longue plage.",es:"Dunas blancas como la nieve se alzan tras esta larga playa."}],
+  ["Santu Antine","site",0,"Logudoro",{en:"One of the grandest Nuragic towers on the island, in a valley full of them.",it:"Una delle torri nuragiche più imponenti dell'isola, in una valle che ne è piena.",nl:"Een van de indrukwekkendste nuraghetorens van het eiland, in een dal dat er vol mee staat.",de:"Einer der gewaltigsten Nuraghentürme der Insel, in einem Tal voller solcher Türme.",fr:"L'une des plus imposantes tours nuragiques de l'île, dans une vallée qui en est remplie.",es:"Una de las torres nurágicas más imponentes de la isla, en un valle lleno de ellas."}],
+  ["Laveria Lamarmora","site",1,"Iglesiente",{en:"The ruins of an ore-washing plant cling to a cliff high above the sea.",it:"I ruderi di un impianto per il lavaggio del minerale aggrappati a una falesia alta sul mare.",nl:"De ruïnes van een ertswasserij hangen aan een klif hoog boven zee.",de:"Die Ruinen einer Erzwäsche klammern sich an eine Klippe hoch über dem Meer.",fr:"Les ruines d'une laverie de minerai s'accrochent à une falaise au-dessus de la mer.",es:"Las ruinas de un lavadero de mineral se aferran a un acantilado sobre el mar."}],
+  ["Pattada","village",0,"Logudoro",{en:"Hand-forged folding knives with horn handles have made this village's name.",it:"I coltelli a serramanico forgiati a mano, con manico di corno, hanno reso famoso questo paese.",nl:"Handgesmede zakmessen met een hoornen heft hebben dit dorp beroemd gemaakt.",de:"Handgeschmiedete Klappmesser mit Horngriff haben dieses Dorf berühmt gemacht.",fr:"Des couteaux pliants forgés à la main, au manche de corne, ont fait la réputation de ce village.",es:"Las navajas forjadas a mano con mango de cuerno han dado fama a este pueblo."}],
+  ["Sella del Diavolo","nature",1,"Golfo degli Angeli",{en:"Legend says angels fought Lucifer over this bay, and that this headland is the saddle he lost.",it:"La leggenda dice che gli angeli combatterono Lucifero su questo golfo e che il promontorio è ciò che lui perse cadendo.",nl:"Volgens de legende vochten engelen hier boven de baai tegen Lucifer, en is deze kaap het zadel dat hij verloor.",de:"Der Legende nach kämpften Engel über dieser Bucht gegen Luzifer, und dieses Kap ist der Sattel, den er verlor.",fr:"Selon la légende, des anges ont combattu Lucifer au-dessus de ce golfe, et ce promontoire est la selle qu'il a perdue.",es:"Cuenta la leyenda que los ángeles lucharon contra Lucifer sobre este golfo, y que este cabo es la silla que perdió."}],
+  ["Grotte Is Zuddas","nature",0,"Sulcis",{en:"Aragonite crystals in this cave grow sideways and every which way, as if gravity didn't matter.",it:"In questa grotta i cristalli di aragonite crescono di lato e in ogni direzione, come se la gravità non contasse.",nl:"In deze grot groeien aragonietkristallen zijwaarts en alle kanten op, alsof de zwaartekracht niet bestaat.",de:"In dieser Höhle wachsen Aragonitkristalle seitwärts und kreuz und quer, als gäbe es keine Schwerkraft.",fr:"Dans cette grotte, des cristaux d'aragonite poussent de travers et dans tous les sens, comme sans gravité.",es:"En esta cueva, los cristales de aragonito crecen de lado y en todas direcciones, como si no hubiera gravedad."}],
+  ["Sant'Andrea Priu","site",0,"Logudoro",{en:"A prehistoric tomb cut into the rock later became a Christian church, frescoes included.",it:"Una tomba preistorica scavata nella roccia divenne poi una chiesa cristiana, con tanto di affreschi.",nl:"Een prehistorisch graf, uitgehakt in de rots, werd later een christelijke kerk, compleet met fresco's.",de:"Ein in den Fels gehauenes prähistorisches Grab wurde später zur christlichen Kirche, samt Fresken.",fr:"Une tombe préhistorique creusée dans la roche est ensuite devenue une église chrétienne, fresques comprises.",es:"Una tumba prehistórica excavada en la roca se convirtió luego en iglesia cristiana, con frescos incluidos."}],
+  ["Porto Torres","town",1,"Turritano",{en:"Founded by the Romans, and home to the largest Romanesque church in Sardinia.",it:"Fondata dai Romani, ospita la più grande chiesa romanica della Sardegna.",nl:"Gesticht door de Romeinen en thuis van de grootste romaanse kerk van Sardinië.",de:"Von den Römern gegründet und Heimat der größten romanischen Kirche Sardiniens.",fr:"Fondée par les Romains, elle abrite la plus grande église romane de Sardaigne.",es:"Fundada por los romanos, alberga la mayor iglesia románica de Cerdeña."}],
+  ["Saccargia","site",0,"Logudoro",{en:"A Romanesque church in bold black-and-white stripes, alone in open country.",it:"Una chiesa romanica a vistose strisce bianche e nere, sola in aperta campagna.",nl:"Een romaanse kerk met opvallende zwart-witte strepen, helemaal alleen in het open land.",de:"Eine romanische Kirche mit kräftigen schwarz-weißen Streifen, allein auf freiem Feld.",fr:"Une église romane à larges rayures noires et blanches, seule en pleine campagne.",es:"Una iglesia románica de llamativas franjas blancas y negras, sola en pleno campo."}],
+  ["Budelli","island",1,"Gallura",{en:"Its famous beach gets its pink colour from tiny crushed sea creatures. You may only look at it from a boat.",it:"La sua spiaggia famosa deve il colore rosa a minuscoli organismi marini sminuzzati. Si può ammirare solo dalla barca.",nl:"Het beroemde strand dankt zijn roze kleur aan piepkleine vermalen zeediertjes. Je mag er alleen vanaf een boot naar kijken.",de:"Sein berühmter Strand verdankt das Rosa winzigen zerriebenen Meerestieren. Ansehen darf man ihn nur vom Boot aus.",fr:"Sa célèbre plage doit sa couleur rose à de minuscules organismes marins broyés. On ne peut l'admirer que depuis un bateau.",es:"Su famosa playa debe el color rosa a diminutos organismos marinos triturados. Solo se puede ver desde un barco."}],
+  ["Sedilo","village",0,"Guilcer",{en:"Every July, horsemen race wildly down a hill to a sanctuary in honour of Saint Constantine.",it:"Ogni luglio i cavalieri si lanciano al galoppo giù da una collina verso un santuario, in onore di san Costantino.",nl:"Elke juli stormen ruiters in wilde vaart een heuvel af naar een heiligdom, ter ere van de heilige Constantijn.",de:"Jeden Juli stürmen Reiter zu Ehren des heiligen Konstantin einen Hügel hinab zu einem Heiligtum.",fr:"Chaque juillet, des cavaliers dévalent une colline vers un sanctuaire en l'honneur de saint Constantin.",es:"Cada julio, los jinetes bajan a galope tendido una colina hacia un santuario en honor a san Constantino."}],
+  ["Monte d'Accoddi","site",0,"Nurra",{en:"A huge stepped altar from prehistoric times that looks more like Mesopotamia than the Mediterranean.",it:"Un enorme altare a gradoni di epoca preistorica, che ricorda più la Mesopotamia che il Mediterraneo.",nl:"Een enorm getrapt altaar uit de prehistorie dat meer aan Mesopotamië doet denken dan aan de Middellandse Zee.",de:"Ein riesiger gestufter Altar aus prähistorischer Zeit, der eher an Mesopotamien als ans Mittelmeer erinnert.",fr:"Un immense autel à degrés préhistorique, qui évoque plus la Mésopotamie que la Méditerranée.",es:"Un enorme altar escalonado prehistórico que recuerda más a Mesopotamia que al Mediterráneo."}],
+  ["La Maddalena","town",1,"Gallura",{en:"Until 2008 the US Navy kept a nuclear submarine base just off this island town.",it:"Fino al 2008 la Marina statunitense ha tenuto una base di sottomarini nucleari davanti a questa cittadina isolana.",nl:"Tot 2008 had de Amerikaanse marine vlak voor dit eilandstadje een basis voor atoomonderzeeërs.",de:"Bis 2008 unterhielt die US-Marine direkt vor diesem Inselstädtchen eine Basis für Atom-U-Boote.",fr:"Jusqu'en 2008, la marine américaine a gardé une base de sous-marins nucléaires au large de cette petite ville insulaire.",es:"Hasta 2008, la Marina de EE. UU. tuvo una base de submarinos nucleares frente a esta ciudad isleña."}]
+];
+
+/* Kustlijn: lengte, breedte */
+const COAST = [[8.20,40.97],[8.24,40.92],[8.40,40.84],[8.52,40.82],[8.71,40.91],[8.82,40.93],[8.87,41.01],[8.95,41.05],[9.07,41.13],[9.14,41.245],[9.19,41.24],[9.23,41.255],[9.28,41.19],[9.38,41.18],[9.43,41.175],[9.44,41.11],[9.54,41.14],[9.55,41.08],[9.65,41.01],[9.60,40.96],[9.52,40.92],[9.63,40.92],[9.64,40.875],[9.72,40.84],[9.68,40.77],[9.72,40.70],[9.72,40.63],[9.76,40.60],[9.83,40.53],[9.73,40.40],[9.71,40.33],[9.63,40.28],[9.63,40.22],[9.70,40.12],[9.74,40.08],[9.69,39.99],[9.74,39.93],[9.69,39.90],[9.68,39.83],[9.70,39.77],[9.68,39.70],[9.65,39.60],[9.64,39.50],[9.63,39.40],[9.63,39.30],[9.58,39.25],[9.57,39.14],[9.52,39.10],[9.45,39.14],[9.31,39.15],[9.26,39.20],[9.16,39.185],[9.11,39.21],[9.02,39.20],[9.03,39.06],[9.02,38.985],[8.92,38.93],[8.88,38.89],[8.85,38.865],[8.72,38.89],[8.65,38.86],[8.60,38.96],[8.58,39.03],[8.48,39.07],[8.42,39.14],[8.38,39.20],[8.43,39.29],[8.41,39.34],[8.40,39.40],[8.38,39.46],[8.45,39.54],[8.45,39.67],[8.45,39.76],[8.52,39.72],[8.54,39.80],[8.53,39.90],[8.44,39.86],[8.39,39.96],[8.38,40.03],[8.42,40.05],[8.49,40.10],[8.49,40.17],[8.47,40.26],[8.48,40.29],[8.38,40.34],[8.34,40.48],[8.31,40.56],[8.22,40.60],[8.16,40.56],[8.20,40.68],[8.13,40.73],[8.17,40.85]];
+const ISLETS = [
+  [[8.44,39.09],[8.50,39.05],[8.49,38.98],[8.42,38.955],[8.36,39.04],[8.39,39.10]],
+  [[8.33,39.17],[8.28,39.20],[8.22,39.17],[8.21,39.11],[8.27,39.09],[8.32,39.12]],
+  [[8.25,40.99],[8.21,41.04],[8.25,41.08],[8.33,41.09],[8.32,41.05],[8.29,41.03],[8.30,40.99]],
+  [[9.37,41.22],[9.40,41.26],[9.44,41.24],[9.42,41.20]],
+  [[9.45,41.19],[9.45,41.24],[9.49,41.23],[9.48,41.18]],
+  [[9.67,40.91],[9.73,40.90],[9.70,40.88]]
+];
+
+/* ---------- Rekenen ---------- */
+const MAP_W = 510, MAP_H = 900, SCALE = 352;
+const px = (lon, lat) => [ (lon - 8.05) * Math.cos(40 * Math.PI / 180) * SCALE, (41.36 - lat) * SCALE ];
+function km(a, b) {
+  const r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLon = (b.lon - a.lon) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLon / 2) ** 2;
+  return Math.round(6371 * 2 * Math.asin(Math.sqrt(h)));
+}
+function bearing(a, b) {
+  const x = (b.lon - a.lon) * Math.cos((a.lat + b.lat) / 2 * Math.PI / 180), y = b.lat - a.lat;
+  return (Math.atan2(x, y) * 180 / Math.PI + 360) % 360;
+}
+function sardDay() {
+  const s = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const [y, m, d] = s.split("-").map(Number);
+  return Math.max(0, Math.round((Date.UTC(y, m - 1, d) - Date.UTC(2026, 10, 9)) / 864e5));
+}
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function puzzleFor(day) {
+  const n = PUZZLES.length, cycle = Math.floor(day / n), order = PUZZLES.map((_, i) => i);
+  if (cycle > 0) { const r = rng(cycle * 7919); for (let i = n - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; } }
+  const p = PUZZLES[order[day % n]];
+  return { name: p[0], type: p[1], sea: p[2], area: p[3], story: p[4] };
+}
+const fold = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/['’]/g, "").toLowerCase();
+
+/* ---------- Bewaren ---------- */
+const memory = {};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); if (v !== null) return JSON.parse(v); } catch (e) { /* geen opslag */ } return k in memory ? memory[k] : d; },
+  set(k, v) { memory[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* geen opslag */ } }
+};
+
+/* ---------- Spel ---------- */
+const day = sardDay();
+const today = puzzleFor(day);
+const target = WHERE[today.name];
+const MAX = 6;
+function firstLang() {
+  const saved = store.get("aundi-lang", null);
+  if (LANGS.includes(saved)) return saved;
+  const nav = (navigator.language || "en").slice(0, 2).toLowerCase();
+  return LANGS.includes(nav) ? nav : "en";
+}
+let lang = firstLang();
+let state = store.get("aundi-day-" + day, { guesses: [], done: false, won: false });
+let stats = store.get("aundi-stats", { played: 0, won: 0, streak: 0, best: 0, last: -2 });
+let sel = -1, msg = "", shareNote = "", shareFallback = false;
+const $ = (id) => document.getElementById(id);
+const t = () => T[lang];
+function el(tag, props, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (k === "class") n.className = v;
+    else if (k === "text") n.textContent = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined && v !== false) n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids) if (c !== null && c !== undefined && c !== false) n.append(c);
+  return n;
+}
+function smooth(points, close) {
+  const pts = points.map((p) => px(p[0], p[1]));
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  let d = "M" + mid(pts[pts.length - 1], pts[0]).map((v) => v.toFixed(1)).join(" ");
+  pts.forEach((p, i) => { const m = mid(p, pts[(i + 1) % pts.length]); d += "Q" + p[0].toFixed(1) + " " + p[1].toFixed(1) + " " + m[0].toFixed(1) + " " + m[1].toFixed(1); });
+  return d + (close ? "Z" : "");
+}
+const LAND = [COAST, ...ISLETS].map((p) => smooth(p, true)).join("");
+
+function renderMap() {
+  const bar = 50 * Math.cos(40 * Math.PI / 180) * SCALE / (111.32 * Math.cos(40 * Math.PI / 180)); /* 50 km */
+  let pins = "";
+  state.guesses.forEach((g, i) => {
+    const w = WHERE[g]; if (!w || g === today.name) return;
+    const [x, y] = px(w.lon, w.lat);
+    pins += `<g class="pin"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="14" fill="#12303a" stroke="#fbf7ec" stroke-width="2"/><text x="${x.toFixed(1)}" y="${(y + 6).toFixed(1)}" text-anchor="middle" font-size="17" font-weight="700" fill="#fbf7ec">${i + 1}</text></g>`;
+  });
+  if (state.done) {
+    const [x, y] = px(target.lon, target.lat);
+    pins += `<g class="pin"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="26" fill="none" stroke="#d2431f" stroke-width="3"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="11" fill="#d2431f"/></g>`;
+  }
+  $("map").innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${MAP_W} ${MAP_H}" role="img" aria-label="Sardinia">
+    <text x="112" y="700" font-family="Alegreya, Georgia, serif" font-style="italic" font-size="22" fill="#6fa6b4" transform="rotate(-82 112 700)">Mare di Sardegna</text>
+    <text x="488" y="690" font-family="Alegreya, Georgia, serif" font-style="italic" font-size="22" fill="#6fa6b4" transform="rotate(-78 488 690)">Mar Tirreno</text>
+    <path d="${LAND}" fill="#efd9a3" stroke="#12303a" stroke-width="2" stroke-linejoin="round"/>
+    <g font-family="Alegreya Sans, sans-serif" fill="#fbf7ec"><path d="M452 60l10 30-10-7-10 7z" fill="#efd9a3"/><text x="452" y="52" text-anchor="middle" font-size="20" font-weight="700">N</text></g>
+    <g fill="#fbf7ec" font-family="Alegreya Sans, sans-serif"><rect x="330" y="858" width="${bar.toFixed(0)}" height="4"/><text x="330" y="850" font-size="17">50 km</text></g>
+    ${pins}
+  </svg>`;
+}
+function arrow(deg, color) {
+  const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("width", "26"); s.setAttribute("height", "26"); s.setAttribute("aria-hidden", "true");
+  s.innerHTML = `<path d="M12 2l7 11h-5v9h-4v-9H5z" fill="${color}" transform="rotate(${deg.toFixed(0)} 12 12)"/>`;
+  return s;
+}
+function compass(deg) { return t().d[Math.round(deg / 45) % 8]; }
+function hintRow(key, value, need, isStory) {
+  const open = state.done || state.guesses.length >= need;
+  return el("li", { class: (isStory ? "story " : "") + (open ? "" : "locked") },
+    el("span", { class: "k", text: key }),
+    el("span", { class: "v", text: open ? value : t().locked + " " + need })
+  );
+}
+function suggestions() {
+  const input = $("guess"); if (!input) return [];
+  const q = fold(input.value.trim());
+  if (!q) return [];
+  const names = PLACES.map((p) => p[0]).filter((n) => !state.guesses.includes(n));
+  const starts = names.filter((n) => fold(n).startsWith(q));
+  const inside = names.filter((n) => !fold(n).startsWith(q) && fold(n).includes(q));
+  return [...starts, ...inside].slice(0, 8);
+}
+function renderList() {
+  const list = $("list"); if (!list) return;
+  const items = suggestions();
+  if (sel >= items.length) sel = items.length - 1;
+  list.replaceChildren(...items.map((n, i) => el("li", {
+    id: "opt" + i, role: "option", "aria-selected": i === sel ? "true" : "false", text: n,
+    onmousedown: (e) => { e.preventDefault(); submit(n); }
+  })));
+  list.hidden = !items.length;
+  $("guess").setAttribute("aria-expanded", items.length ? "true" : "false");
+  if (sel >= 0) $("guess").setAttribute("aria-activedescendant", "opt" + sel); else $("guess").removeAttribute("aria-activedescendant");
+}
+function submit(name) {
+  if (state.done) return;
+  const input = $("guess");
+  const typed = name || (sel >= 0 ? suggestions()[sel] : null) || (() => {
+    const q = fold(input.value.trim());
+    return PLACES.map((p) => p[0]).find((n) => fold(n) === q) || (suggestions().length === 1 ? suggestions()[0] : null);
+  })();
+  if (!typed) { msg = input.value.trim() ? t().pick : ""; const m = $("msg"); if (m) m.textContent = msg; return; }
+  if (state.guesses.includes(typed)) { msg = t().dup; $("msg").textContent = msg; return; }
+  state.guesses.push(typed);
+  if (typed === today.name) { state.done = true; state.won = true; }
+  else if (state.guesses.length >= MAX) { state.done = true; state.won = false; }
+  store.set("aundi-day-" + day, state);
+  if (state.done) finish();
+  msg = ""; sel = -1;
+  render();
+  const again = $("guess"); if (again && window.matchMedia("(hover: hover)").matches) again.focus();
+}
+function finish() {
+  stats.played += 1;
+  if (state.won) { stats.won += 1; stats.streak = stats.last === day - 1 ? stats.streak + 1 : 1; stats.best = Math.max(stats.best, stats.streak); stats.last = day; }
+  else { stats.streak = 0; }
+  store.set("aundi-stats", stats);
+}
+function shareText() {
+  const grid = state.guesses.map((g) => {
+    const d = km(WHERE[g], target);
+    return g === today.name ? "\u{1F7E9}" : d < 30 ? "\u{1F7E8}" : d < 90 ? "\u{1F7E7}" : "\u{1F7E5}";
+  }).join("");
+  return `Aundi? ${day + 1}  ${state.won ? state.guesses.length : "X"}/${MAX}\n${grid}\n${SHARE_URL}`;
+}
+async function share() {
+  shareFallback = false;
+  try { await navigator.clipboard.writeText(shareText()); shareNote = t().copied; }
+  catch (e) { shareNote = t().copyFail; shareFallback = true; }
+  render();
+}
+function renderPlay() {
+  const L = t();
+  const rows = [];
+  for (let i = 0; i < MAX; i++) {
+    const g = state.guesses[i];
+    if (!g) { rows.push(el("li", { class: "empty" }, el("span", { class: "num", text: i + 1 }))); continue; }
+    const hit = g === today.name, d = km(WHERE[g], target), b = bearing(WHERE[g], target);
+    rows.push(el("li", { class: hit ? "hit" : "" },
+      el("span", { class: "num", text: i + 1 }),
+      el("span", { class: "name", text: g }),
+      el("span", { class: "km", text: hit ? "" : d + " km " + compass(b) }),
+      el("span", { class: "dir" }, hit ? null : arrow(b, "#efd9a3")),
+      hit ? null : el("span", { class: "bar", style: "width:" + Math.max(4, 100 - d / 2.8).toFixed(0) + "%" })
+    ));
+  }
+  const hints = el("ul", { class: "hints" },
+    el("li", null, el("span", { class: "k", text: L.type }), el("span", { class: "v", text: L.t[today.type] })),
+    hintRow(L.coast, today.sea ? L.nearSea : L.inland, 1),
+    hintRow(L.area, today.area, 2),
+    hintRow(L.story, today.story[lang], 3, true),
+    hintRow(L.letter, today.name[0], 4)
+  );
+  let bottom;
+  if (state.done) {
+    const pct = stats.played ? Math.round(stats.won / stats.played * 100) : 0;
+    bottom = el("section", { class: "end", id: "end" },
+      el("h2", { text: state.won ? L.won : L.lost }),
+      el("p", { class: "place", text: state.won ? today.name + " · " + state.guesses.length + " " + (state.guesses.length === 1 ? L.in : L.ins) : L.was + ": " + today.name }),
+      el("p", { class: "story", text: today.story[lang] }),
+      el("div", { class: "acts" },
+        el("button", { class: "btn", id: "share", type: "button", text: L.share, onclick: share }),
+        el("a", { href: SITE_URL, text: L.more })
+      ),
+      shareNote ? el("p", { text: shareNote, role: "status" }) : null,
+      shareFallback ? (() => { const a = el("textarea", { id: "shareText", readonly: true }); a.value = shareText(); return a; })() : null,
+      el("div", { class: "stats" },
+        el("div", null, el("b", { text: stats.played }), el("span", { text: L.played })),
+        el("div", null, el("b", { text: pct + "%" }), el("span", { text: L.pct })),
+        el("div", null, el("b", { text: stats.streak }), el("span", { text: L.streak })),
+        el("div", null, el("b", { text: stats.best }), el("span", { text: L.best }))
+      ),
+      el("p", { class: "tomorrow", text: L.tomorrow })
+    );
+  } else {
+    const input = el("input", { id: "guess", type: "text", autocomplete: "off", autocapitalize: "words", spellcheck: "false", role: "combobox", "aria-controls": "list", "aria-expanded": "false", "aria-autocomplete": "list", placeholder: L.ph });
+    input.addEventListener("input", () => { sel = -1; $("msg").textContent = ""; renderList(); });
+    input.addEventListener("blur", () => { const l = $("list"); if (l) l.hidden = true; });
+    input.addEventListener("focus", renderList);
+    input.addEventListener("keydown", (e) => {
+      const n = suggestions().length;
+      if (e.key === "ArrowDown" && n) { e.preventDefault(); sel = (sel + 1) % n; renderList(); }
+      else if (e.key === "ArrowUp" && n) { e.preventDefault(); sel = (sel - 1 + n) % n; renderList(); }
+      else if (e.key === "Enter") { e.preventDefault(); submit(); }
+      else if (e.key === "Escape") { $("list").hidden = true; }
+    });
+    bottom = el("div", { class: "ask" },
+      el("label", { for: "guess", text: L.label }),
+      el("div", { class: "row" }, input, el("button", { id: "go", type: "button", text: L.go, onclick: () => submit() })),
+      el("ul", { id: "list", role: "listbox", hidden: true }),
+      el("p", { class: "msg", id: "msg", role: "status", text: msg })
+    );
+  }
+  const howBlock = state.guesses.length ? null : el("p", { class: "how", text: L.how });
+  $("play").replaceChildren(
+    el("p", { class: "nr", text: L.no + " " + (day + 1) }),
+    howBlock || "",
+    hints,
+    el("ol", { class: "tries" }, ...rows),
+    bottom
+  );
+}
+function render() {
+  const L = t();
+  document.documentElement.lang = lang;
+  $("tag").textContent = L.tag;
+  $("langs").replaceChildren(...LANGS.map((c) => el("button", { type: "button", id: "lang-" + c, "aria-pressed": c === lang ? "true" : "false", text: c.toUpperCase(), onclick: () => { lang = c; store.set("aundi-lang", c); shareNote = ""; shareFallback = false; msg = ""; render(); } })));
+  renderMap();
+  renderPlay();
+  const f = $("foot");
+  f.replaceChildren(L.name + " " + L.by + " ", el("a", { href: SITE_URL, text: "Sardegna Autentica" }), ".");
+}
+render();
+</script>
+</body>
+</html>
