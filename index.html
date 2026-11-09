@@ -346,7 +346,7 @@ let stats = store.get("aundi-stats", { played: 0, won: 0, streak: 0, best: 0, la
 let sel = -1, msg = "", shareNote = "", shareFallback = false, pick = null;
 let playerName = String(store.get("aundi-name", "") || "").slice(0, 16);
 /* Vul hier je Umami Website-ID in om te zien hoeveel mensen spelen. Leeg = geen statistieken. */
-const UMAMI_ID = "";
+   const UMAMI_ID = "077edf30-d6a2-4752-ac01-5b39316acff9";
 if (UMAMI_ID) { const u = document.createElement("script"); u.defer = true; u.src = "https://cloud.umami.is/script.js"; u.setAttribute("data-website-id", UMAMI_ID); document.head.append(u); }
 function track(name) { try { if (window.umami) window.umami.track(name); } catch (e) { /* statistiek is niet belangrijk genoeg om te storen */ } }
 if (challenge) setTimeout(() => track("challenge-open"), 1500);
